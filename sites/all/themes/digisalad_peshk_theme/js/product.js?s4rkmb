@@ -1,0 +1,217 @@
+(function($, Drupal) {
+  Drupal.behaviors.product = {
+      attach: function(context, settings) {
+
+          function updateSpecWithFilter() {
+              var v = $("#spec-filter .filter-voltage .filter-option.active").text();
+              var f = $("#spec-filter .filter-frequency .filter-option.active").text();
+              showSpec(v, f);
+          }
+
+          function showSpec(v, f) {
+              $(".more-spec div.spec-table").hide();
+
+              var specContainer = $(".more-spec").find("div[data-voltage='" + v + "'][data-frequency='" + f + "']");
+              var heroSpec = specContainer.find(".hero-spec");
+              specContainer.show();
+              $("#hero-spec-display").html(heroSpec.html());
+              $("#hero-spec-display").find(".more").appendTo("#hero-spec-display-more");
+
+              // Check if amca is available
+              const $switch = $('.amca-buttons-wrapper');
+              let $amca = specContainer.find('.product-specification-tab.amca');
+              if ($amca.length > 0) {
+                  
+                  // $switch.find('.active').click();
+                  if(specContainer.find('.product-specification-tab.general').length == 0) {
+                    $('.product-specification-tab.general').hide();
+                    $('.product-specification-tab.amca').show();
+
+                    $('.product-specification-tab.general.shared').hide();
+                    specContainer.find('.product-specification-tab.general').hide();
+                    specContainer.find('.product-specification-tab.amca').show();
+                  } else {
+                    $switch.show();
+                    if($switch.length > 0) {
+                      $switch.find('.active').trigger('click');
+                    }
+                  }
+              } else {
+                  $switch.hide();
+
+                  $('.product-specification-tab.general').show();
+                  $('.product-specification-tab.amca').hide();
+
+                  specContainer.find('.product-specification-tab.general').show();
+              }
+          }
+
+          function updatePQCurveWithFilter() {
+              var v = $("#pqcurve-filter .filter-voltage .filter-option.active").text();
+              var f = $("#pqcurve-filter .filter-frequency .filter-option.active").text();
+              var m = $("#pqcurve-filter .filter-model .filter-option.active").text();
+              showPQCurve(v, f, m);
+          }
+
+          function showPQCurve(v, f, m) {
+              var curveContainer = $(".pqcurves").find("div[data-voltage='" + v + "'][data-frequency='" + f + "'][data-model='" + m + "']");
+              curveContainer.show().siblings().hide();
+          }
+
+          function updateFreqencyOpts(filter, divSelector, v) {
+              //lock the unavailables
+              $(".filter-frequency .filter-option", filter).each(function() {
+                  $(this).removeClass("disabled");
+
+                  // check if amca selector exists and the record exists
+                  let haveCurve = 0;
+                  if(amca_only_market && amca_product) {
+                    haveCurve = $(divSelector + "[data-voltage='" + v + "'][data-frequency='" + $(this).text() + "'][data-has-amca='1']").length; 
+                  } else {
+                    haveCurve = $(divSelector + "[data-voltage='" + v + "'][data-frequency='" + $(this).text() + "']").length; 
+                  }
+                  if (!haveCurve) {
+                    $(this).addClass("disabled");
+                  }
+              });
+          }
+
+          function updateModelOpts(filter, divSelector, v, f) {
+              //lock the unavailables
+              $(".filter-model .filter-option", filter).each(function() {
+                  $(this).removeClass("disabled");
+                  var haveCurve = $(divSelector + "[data-voltage='" + v + "'][data-frequency='" + f + "'][data-model='" + $(this).text() + "']").length;
+                  if (!haveCurve) {
+                      $(this).addClass("disabled");
+                  }
+              });
+          }
+
+          if ($(".node-type-product.page-node").size()) {
+
+              //product variant
+              $("#product_color_switch .widget-variant-color > li").click(function() {
+                  var photo = $(this).attr("data-photo");
+                  $("#product_photo_preview > img").attr("src", photo);
+                  $("#product_photo_preview").attr("href", photo);
+                  $(this).siblings().removeClass("active");
+                  $(this).addClass("active");
+              });
+              $(".node-product-specification").slideUp();
+              //show more spec
+              $(".more-spec-btn").click(function(e) {
+                  e.preventDefault();
+                  if ($(this).hasClass('active')) {
+                      $(this).removeClass('active');
+                      $(".node-product-specification .node-product-specification.general").hide();
+                      $(".node-product-specification").slideUp();
+                  } else {
+                      $(this).addClass('active');
+                      $(".node-product-specification .node-product-specification.general").show();
+                      $(".node-product-specification").slideDown();
+                  }
+              });
+
+              //spec filters and defaults
+              var firstSpecVoltage = $(".spec-table").first().attr("data-voltage");
+              $("#spec-filter .filter-voltage .filter-option:contains('" + $(".spec-table").first().attr("data-voltage") + "')").addClass("active");
+              $("#spec-filter .filter-frequency .filter-option:contains('" + $(".spec-table").first().attr("data-frequency") + "')").addClass("active");
+              updateFreqencyOpts($("#spec-filter"), ".spec-table", firstSpecVoltage);
+              updateSpecWithFilter();
+
+              /*
+                      $("#spec-filter .filter-voltage .filter-option").click(function() {
+                        var voltage = $(this).text();
+                        $(this).siblings().removeClass("active");
+                        $(this).addClass("active");
+
+                        //look for first available freq and active it
+                        var firstFrequency = $(".spec-table[data-voltage='" + voltage + "']").first().attr("data-frequency");
+                        $("#spec-filter .filter-frequency .filter-option:contains('" + firstFrequency + "')").siblings().removeClass("active").end().addClass("active");
+                        updateFreqencyOpts($("#spec-filter"), ".spec-table", voltage);
+                        updateSpecWithFilter();
+                      });
+              */
+
+              //pqcurve filters and defaults
+              var firstCurveVoltage = $(".pqcurves > .pqcurve").first().attr("data-voltage");
+              var firstCurveFrequency = $(".pqcurves > .pqcurve").first().attr("data-frequency");
+              var firstCurveModel = $(".pqcurves > .pqcurve").first().attr("data-model");
+              $("#pqcurve-filter .filter-voltage .filter-option:contains('" + firstCurveVoltage + "')").addClass("active");
+              $("#pqcurve-filter .filter-frequency .filter-option:contains('" + firstCurveFrequency + "')").addClass("active");
+              $("#pqcurve-filter .filter-model .filter-option:contains('" + firstCurveModel + "')").addClass("active");
+              updateFreqencyOpts($("#pqcurve-filter"), ".pqcurve", firstCurveVoltage);
+              updateModelOpts($("#pqcurve-filter"), ".pqcurve", firstCurveVoltage, firstCurveFrequency);
+              updatePQCurveWithFilter();
+
+
+              // PQ curve voltage onclick
+              $("#pqcurve-filter .filter-voltage .filter-option").click(function() {
+                  var voltage = $(this).text();
+                  $(this).siblings().removeClass("active");
+                  $(this).addClass("active");
+
+                  //look for first available freq and active it
+                  var firstFrequency = $(".pqcurve[data-voltage='" + voltage + "']").first().attr("data-frequency");
+                  var firstModel = $(".pqcurve[data-voltage='" + voltage + "']").first().attr("data-model");
+                  $("#pqcurve-filter .filter-frequency .filter-option:contains('" + firstFrequency + "')").siblings().removeClass("active").end().addClass("active");
+                  $("#pqcurve-filter .filter-model .filter-option:contains('" + firstModel + "')").siblings().removeClass("active").end().addClass("active");
+                  updateFreqencyOpts($("#pqcurve-filter"), ".pqcurve", voltage);
+                  updateModelOpts($("#pqcurve-filter"), ".pqcurve", voltage, firstFrequency);
+                  updatePQCurveWithFilter();
+              });
+
+              // PQ curve frequency onclick
+              $(document).on('click', "#pqcurve-filter .filter-frequency .filter-option:not(.disabled)", function() {
+                  var voltage = $("#pqcurve-filter .filter-voltage .filter-option.active").text();
+                  $(this).siblings().removeClass("active");
+                  $(this).addClass("active");
+
+                  //look for first available freq and active it
+                  var firstFrequency = $(this).text();
+                  var firstModel = $(".pqcurve[data-voltage='" + voltage + "']").first().attr("data-model");
+                  $("#pqcurve-filter .filter-frequency .filter-option:contains('" + firstFrequency + "')").siblings().removeClass("active").end().addClass("active");
+                  $("#pqcurve-filter .filter-model .filter-option:contains('" + firstModel + "')").siblings().removeClass("active").end().addClass("active");
+                  updateFreqencyOpts($("#pqcurve-filter"), ".pqcurve", voltage);
+                  updateModelOpts($("#pqcurve-filter"), ".pqcurve", voltage, firstFrequency);
+                  updatePQCurveWithFilter();
+              });
+
+              // PQ curve model onclick
+              $(document).on('click', "#pqcurve-filter .filter-model .filter-option:not(.disabled)", function() {
+                  var voltage = $("#pqcurve-filter .filter-voltage .filter-option.active").text();
+                  $(this).siblings().removeClass("active");
+                  $(this).addClass("active");
+
+                  //look for first available freq and active it
+                  var firstFrequency = $(".pqcurve[data-voltage='" + voltage + "']").first().attr("data-frequency");
+                  $("#pqcurve-filter .filter-frequency .filter-option:contains('" + firstFrequency + "')").siblings().removeClass("active").end().addClass("active");
+                  updateFreqencyOpts($("#pqcurve-filter"), ".pqcurve", voltage);
+                  updateModelOpts($("#pqcurve-filter"), ".pqcurve", voltage, firstFrequency);
+                  updatePQCurveWithFilter();
+              });
+
+
+              $(document).on('click', "#spec-filter .filter-option:not(.disabled)", function() {
+                  $(this).siblings().removeClass("active").end().addClass("active");
+                  var firstSpecVoltage = $("#spec-filter .filter-voltage .filter-option.active").text();
+                  updateFreqencyOpts($("#spec-filter"), ".spec-table", firstSpecVoltage);
+                  if ($("#spec-filter .filter-frequency .filter-option.active").hasClass("disabled")) {
+                      $("#spec-filter .filter-frequency .filter-option.active").removeClass("active")
+                      $("#spec-filter .filter-frequency .filter-option:not(.disabled):eq(0)").addClass("active")
+                  }
+                  updateSpecWithFilter();
+              });
+
+              $(document).on('click', '[href="#pqcurve"]', function() {
+                  var curvoltage = $('#pqcurve-filter .filter-voltage .filter-option.active').text();
+                  var curfrequency = $('#pqcurve-filter .filter-frequency .filter-option.active').text();
+                  var curmodel = $('#pqcurve-filter .filter-model .filter-option.active').text();
+                  var width = jQuery('.pqcurve[data-voltage="127"][data-frequency="60"][data-model="General"] [data-highcharts-chart]').width();
+                  var tmpchart = jQuery('.pqcurve[data-voltage="' + curvoltage + '"][data-frequency="' + curfrequency + '"][data-model="' + curmodel + '"] [data-highcharts-chart]').highcharts();
+                  tmpchart.setSize(width, tmpchart.chartHeight, true);
+              })
+          }
+      }
+  };
+})(jQuery, Drupal);

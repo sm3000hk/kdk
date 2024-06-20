@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="48px" height="48px" viewBox="0 0 48 48" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 52.4 (67378) - http://www.bohemiancoding.com/sketch -->
+    <title>btn/dirtyArea Copy 2</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <linearGradient x1="12.9835559%" y1="15.6832787%" x2="88.9396421%" y2="81.3224546%" id="linearGradient-1">
+            <stop stop-color="#0B838E" offset="0%"></stop>
+            <stop stop-color="#0075DB" offset="100%"></stop>
+        </linearGradient>
+        <circle id="path-2" cx="15" cy="15" r="15"></circle>
+        <filter x="-45.0%" y="-45.0%" width="190.0%" height="190.0%" filterUnits="objectBoundingBox" id="filter-3">
+            <feMorphology radius="1" operator="dilate" in="SourceAlpha" result="shadowSpreadOuter1"></feMorphology>
+            <feOffset dx="0" dy="0" in="shadowSpreadOuter1" result="shadowOffsetOuter1"></feOffset>
+            <feGaussianBlur stdDeviation="3.5" in="shadowOffsetOuter1" result="shadowBlurOuter1"></feGaussianBlur>
+            <feComposite in="shadowBlurOuter1" in2="SourceAlpha" operator="out" result="shadowBlurOuter1"></feComposite>
+            <feColorMatrix values="0 0 0 0 1   0 0 0 0 1   0 0 0 0 1  0 0 0 0.5 0" type="matrix" in="shadowBlurOuter1"></feColorMatrix>
+        </filter>
+        <polygon id="path-4" points="0 0.000361290323 13.3823065 0.000361290323 13.3823065 10.3343935 0 10.3343935"></polygon>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="0.4-Clean-House---KDK" transform="translate(-263.000000, -233.000000)">
+            <g id="btn/clearArea" transform="translate(272.000000, 242.000000)">
+                <g id="Group">
+                    <g id="Group-6-Copy-7">
+                        <g id="Oval-2">
+                            <use fill="black" fill-opacity="1" filter="url(#filter-3)" xlink:href="#path-2"></use>
+                            <circle stroke="#16638A" stroke-width="1" stroke-linejoin="square" fill="url(#linearGradient-1)" fill-rule="evenodd" cx="15" cy="15" r="14.5"></circle>
+                        </g>
+                    </g>
+                    <g id="Page-1" transform="translate(8.709677, 10.645161)">
+                        <mask id="mask-5" fill="white">
+                            <use xlink:href="#path-4"></use>
+                        </mask>
+                        <g id="Clip-2"></g>
+                        <polygon id="Fill-1" fill="#FFFFFF" mask="url(#mask-5)" points="4.37940323 10.3343935 -0.000112903226 5.95487742 1.3298871 4.62374839 4.37940323 7.67326452 12.0523065 0.000361290323 13.3823065 1.33036129"></polygon>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

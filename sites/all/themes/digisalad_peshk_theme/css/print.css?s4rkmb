@@ -1,0 +1,55 @@
+@media print {
+  a[href]:after {
+    content: none !important;
+  }
+  header{display:none!important;}
+  .logo{display:none!important;}
+  #home_carousel{display:none!important;}
+  .view-id-home_feature_category .views-row{background-image: linear-gradient(133deg, #a7d8e3, #cbe0e5)!important;  -webkit-print-color-adjust: exact!important; }
+  img.img-responsive{display:block;}
+  .related-product{display:none!important;}
+	span{border:0px!important;}
+}
+
+body{width:100%;}
+.container{width: 100%;}
+
+
+
+.top-banner{display:none;}
+header#navbar,nav,.nav{display:block;}
+header#navbar li{border:1px solid;display:block;}
+.navbar-default .navbar-nav > li > a{color:#000;}
+
+
+.navbar-btn{background-image: linear-gradient(to bottom, #ffffff, #7f7f7f)!important;}
+
+
+/* product */
+.view-id-catalog_taxonomy .views-row{border:1px solid #efefef;}
+.view-catalog-product .views-row{border:none;}
+
+/* solution centre */
+.solution_item{width:50%;}
+.solution_item span{text-align:left;}
+.solution_item span.centre-title{    position: relative;left:0;bottom:0;}
+/* solution centre > knowledge centre */
+.knowledge-term-list div.col-lg-6{width:50%;}
+/* .knowledge-term-list .field-content, */
+.knowledge-term-list .views-field-field-knowledge-thumbnail,
+.views-field-field-knowledge-thumbnail a,
+.views-field-field-knowledge-thumbnail .img-responsive{width:100%;}
+/* Installation Demo */
+.demo-group .views-field-field-product-thumbnail{
+	border:1px solid #efefef;
+}
+.demo-group .views-field-field-product-thumbnail::after{
+    background-image: url("/sites/all/themes/digisalad_peshk_theme/images/play-button-2.png");
+}
+
+/* About us */
+.left-sub-menu li > a{
+    word-break: break-word;
+}
+
+.view.view-catalog-taxonomy.view-id-catalog_taxonomy.view-display-id-page_subcategory > .view-content .views-row img.img-responsive, .view.view-catalog-taxonomy.view-id-catalog_taxonomy.view-display-id-page > .view-content img.img-responsive{display: block!important;width:auto!important;height:80%!important;} 

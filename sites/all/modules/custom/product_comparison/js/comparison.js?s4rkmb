@@ -1,0 +1,77 @@
+(function ($, Drupal) {
+
+    Drupal.behaviors.product_comparison = {
+        attach: function (context, settings) {
+
+            function lengthConvert(value, from, to) {
+                var mAndMMConversion = 1000;
+                var mAndFeetConversion = 3.28084;
+
+                var fromFactor = from === 'mm' ? mAndMMConversion : (from === 'feet' ? mAndFeetConversion : 1);
+                var toFactor = to === 'mm' ? mAndMMConversion : (to === 'feet' ? mAndFeetConversion : 1);
+
+                return parseFloat(value) / fromFactor * toFactor;
+            }
+
+            function round(value, decimals) {
+                return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+            }
+
+            // Responsive Input Values Tab
+            function setMobileTabClass(tab) {
+                $('.mobile-nav-tab').removeClass('active');
+                $('#mobile-' + tab).addClass('active');
+            }
+
+            function setMobileTabContent(tab) {
+                $('#mobile-' + tab + '-content').show();
+                $('#calculator-type-tab-content').appendTo('#mobile-' + tab + '-content');
+            }
+
+            function locateTabContent() {
+                if ($(window).width() >= 767) {
+                    $('#calculator-type-tab-content').insertAfter($('#calculator-type-tab'));
+                } else {
+                    tab = $("#calculator-type-tab-content > .tab-pane.active").attr('id');
+                    setMobileTabContent(tab);
+                }
+            }
+
+            $(".mobile-nav-tab").click(function () {
+                if ($(this).hasClass("active")) {
+                    var navItem = $(this);
+                    setTimeout(function () {
+                        navItem.removeClass("active").focusout();
+                        $(".calculator-container .type-tab > .tab-pane").removeClass("active");
+                        navItem.next().hide();
+                    }, 50);
+                } else {
+                    $(this).addClass("active")
+                }
+
+                $('#calculator-type-tab a[href="#' + $(this).attr('data') + '"]').tab('show');
+                setMobileTabClass($(this).attr('data'));
+                setMobileTabContent($(this).attr('data'));
+            });
+
+            var limit = 3;
+            $('input.comparison').on('change', function (evt) {
+                if ($("input.comparison:checked").length > limit) {
+                    this.checked = false;
+                }
+
+                if ($("input.comparison:checked").length === limit) {
+                    $("input.comparison:not(:checked)").next().next().addClass('disabled');
+                } else {
+                    $("input.comparison:not(:checked)").next().next().removeClass('disabled');
+                }
+            });
+
+            $(window).resize(locateTabContent);
+            locateTabContent();
+
+
+        }
+    };
+
+})(jQuery, Drupal);

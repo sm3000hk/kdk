@@ -1,0 +1,23 @@
+(function ($, Drupal) {
+  function addEventListener(context) {
+    $(context).find('.field-name-field-variant-color select').on('change',function() {
+        var color = $(this).val();
+        $('.variant_color_box').each(function () {
+          if ($(this).attr('data-variant_color_id') == color){
+              $(this).addClass('active');
+          } else {
+              $(this).removeClass('active');
+          }
+        });
+    });
+  }
+
+
+  Drupal.behaviors.peshk_product_variation = {
+    attach: function (context) {
+      addEventListener(context);
+      
+    }
+  };
+
+})(jQuery, Drupal);

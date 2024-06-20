@@ -1,0 +1,345 @@
+var seriesColor = [
+    // "#007694", // original default curve color
+    "#c01e24", // reserved for default curve
+    "#434348",
+    "#0A8A0C",
+    "#A86500",
+
+    "#6464ED",
+    "#E0009D",
+    "#7B700F",
+    "#117363",
+
+    "#CD2B1A",
+    "#6837A3"
+  ];
+(function ($, Drupal) {
+  Drupal.behaviors.theme = {
+    attach: function (context, settings) {
+      var primary = $("#primary-catagory");
+      var $second = $("#second-catagory");
+      var $product = $("#product");
+      var secondAvailable = [];
+      var productAvailable = [];
+
+      init();
+
+      if(productList) {
+          productList.sort(function (a, b) {
+              return b.nodequeue_position - a.nodequeue_position;
+          });
+      }
+
+
+        $("#second-catagory").on("change", function () {
+        productAvailable = [];
+          $("select#product").attr("disabled", false);
+          $("select#product option").remove();
+        $product.append("<option value='' disabled selected>Select your option</option>");
+        for (var i = 0; i < productList.length; i++) {
+          var curr_second_value = $("option:selected", this).val();
+
+          if (productList[i].catagory_id == curr_second_value) {
+
+            productAvailable.push({"name": productList[i].product_name, "link": productList[i].product_link, "id": productList[i].product_id});
+          }
+        }
+
+        if (productAvailable.length > 0) {
+
+          for (var i = 0; i < productAvailable.length; i++) {
+            $product.append($("<option></option>")
+              .attr("value", productAvailable[i].link).attr("data-id", productAvailable[i].id).text(productAvailable[i].name));
+          }
+        }
+      });
+
+      $("select#product").on("change", function () {
+
+        if (rooturl != "") {
+          var url = rooturl + "/";
+          url += this.value;
+          console.log(url);
+          window.location.href = url;
+        }
+
+      });
+
+      function init() {
+	      var cats = [];
+        if (secondaryArray != null) {
+          for (var i = 0; i < secondaryArray.length; i++) {
+            if (secondaryArray[i].parent_id == curr_value) {
+              //console.log(secondaryArray[i].taxonomy_name);
+              secondAvailable.push({'name': secondaryArray[i].taxonomy_name, 'id': secondaryArray[i].taxonomy_id});
+              cats[i] = secondaryArray[i].taxonomy_id;
+            }else{
+            	//secondAvailable = [];
+            	secondAvailable.push({'name': '', 'id': curr_value});
+            }
+          }
+
+          if (secondAvailable.length > 0) {
+            $('select#product option').remove();
+            $('select#second-catagory option').remove();
+            $second.append("<option value='' disabled selected>Select your option</option>");
+            for (var i = 0; i < secondAvailable.length; i++) {
+              $second.append($("<option></option>")
+                .attr("value", secondAvailable[i].id).text(secondAvailable[i].name));
+            }
+          }
+        }
+// 				console.log("init: " + curr_value);
+// 				console.log(secondAvailable);
+        if (productList != null) {
+          if (productList.length > 0) {
+            for (var i = 0; i < productList.length; i++) {
+//                console.log(productList[i].catagory_id);
+
+              if (( cats.indexOf(productList[i].catagory_id)>=0 ) || productList[i].catagory_id == curr_value) {
+//                  console.log(productList[i].catagory_id);
+                productAvailable.push({
+                  'name': productList[i].product_name,
+                  'id': productList[i].product_id,
+                  'link': productList[i].product_link
+                });
+              }
+            }
+          }
+
+          if (productAvailable.length > 0) {
+            $('select#product option').remove();
+            $product.append("<option value='' disabled selected>Select your option</option>");
+            for (var i = 0; i < productAvailable.length; i++) {
+              $product.append($("<option></option>")
+                .attr("value", productAvailable[i].link).text(productAvailable[i].name));
+            }
+
+          }
+        }
+      }
+
+
+      $("select#first-catagory").on("change", function () {
+        curr_value = $('option:selected', this).val();
+        secondAvailable = [];
+        productAvailable = [];
+
+        init();
+        if($("option:selected", this).attr('data-has-sub') == "1"){
+        	jQuery('#second-catagory option').each(function(){
+        		if(jQuery(this).text() == ""){
+							jQuery(this).remove();
+						}
+        	});
+			jQuery('#second-catagory:not(.download-page)').parent().show();
+			jQuery('#second-catagory.download-page').prop('disabled', false);
+        }else{
+			jQuery('#second-catagory:not(.download-page)').parent().hide();
+			jQuery('#second-catagory.download-page').prop('disabled', true);
+        }
+
+        jQuery("select#product.download-page").attr("disabled", false);
+        if (productAvailable.length === 0){
+            jQuery("select#product.download-page").append("<option value='' disabled selected>Select your option</option>");
+        }
+      });
+
+
+      var url = getBaseUrl();
+      var currentUrl = document.URL;
+      if ($(".field.field-name-field-curve").length > 0) {
+        $(".field.field-name-field-curve").each(function (i, obj) {
+          // console.log($('.field.field-name-field-curve .field-items .field-item.even').text());
+		  var jsondata = {};
+		  var dataset = {};
+		  var hctitle = "";
+		  var subtle = "";
+		  var xmax = 8;
+		  var xmin = 0;
+		  var ymax = 6;
+		  var ymin = 0;
+		  try {
+		        jsondata = JSON.parse($(this).find('.field-items .field-item.even').text());
+				hctitle = jsondata[0].title;
+				subtle = jsondata[0].subtitle;
+				xmax = jsondata[0].xmax;
+				xmin = jsondata[0].xmin;
+				ymax = jsondata[0].ymax;
+				ymin = jsondata[0].ymin;
+				jsondata.shift();
+				dataset = jsondata;
+		    } catch (e) {
+		    }
+          //var dataset = JSON.parse($(this).find('.field-items .field-item.even').text());
+          // console.log(dataset);
+          $(this).attr("id", "curvecontainer" + i + "");
+          var curcontainer = $(this).attr("id");
+
+
+          //var hctitle = $("h1.page-header").text();
+          //var subtle = $(".field.field-name-field-pq-curve-variation-name .field-items .field-item").text();
+          var chart_param = {
+            chart: {
+              renderTo: curcontainer,
+              type: "spline",
+              animation: false,
+              backgroundColor: "",
+              spacingTop: 5,
+              spacingRight: 0,
+              spacingBottom: 5,
+              spacingLeft: 0,
+              events: {
+                click: function (e) {
+
+                }
+              }
+            },
+
+            title: {
+              text: hctitle
+            },
+            subtitle: {
+              text: subtle
+            },
+            xAxis: {
+              gridLineWidth: 1,
+              minPadding: 0.1,
+              maxPadding: 0.1,
+              //maxZoom: 10,
+              min: xmin,
+              max: xmax,
+              reversed: false,
+              title: {
+                enabled: true,
+                text: "Air Volume (㎥/h)"
+              },
+              labels: {
+                // formatter: function() {
+                //     return this.value;
+                // }
+//                 format: "{value} ㎥/h"
+                format: "{value}"
+              },
+              showLastLabel: true
+            },
+            yAxis: {
+
+              min: ymin,
+              max: ymax,
+              //gridLineWidth: 1,
+              minPadding: 0.1,
+              maxPadding: 0.1,
+              //maxZoom: 10,
+              title: {
+                text: "Static Pressure (pa)"
+              },
+              labels: {
+                // formatter: function() {
+                //     return this.value;
+                // }
+//                 format: "{value} pa"
+                format: "{value}"
+              },
+              lineWidth: 2
+            },
+            legend: {
+              enabled: false
+            },
+            tooltip: {
+              headerFormat: "<b>{series.name}</b><br/>",
+              pointFormat: "{point.x} ㎥/h<br/><br/> {point.y} pa",
+              backgroundColor: "rgba(247,247,247,0.85)"
+            },
+            plotOptions: {
+              spline: {
+                marker: {
+                  fillColor: "transparent",
+                  lineWidth: 0,
+                  lineColor: null // inherit from series
+                }
+              },
+              series: {
+                point: {
+                  events: {}
+                },
+                stickyTracking: false
+              },
+              column: {
+                stacking: "normal"
+              },
+              line: {
+                cursor: "ns-resize",
+                marker:false
+              }
+
+
+            },
+            series: [],
+			exporting: {
+		        buttons: {
+		            contextButton: {
+		                menuItems: ['printChart', 'separator', 'downloadPNG', 'downloadJPEG','downloadPDF','downloadSVG']
+		            }
+		        },
+		        csv: {
+	              dateFormat: "%Y-%m-%d"
+	            }
+		    }
+
+          };
+		  for(var i=0;i<dataset.length;i++){
+	        var newSeriesData = {
+		        id: "Dataset",
+				name: "",
+				data: dataset[i],
+				cursor: "move",
+				draggableX: false,
+				draggableY: false,
+				dragMinY: 1,
+				dragMinX: 1,
+	            color: seriesColor[i]
+		    };
+		    chart_param.series.push(newSeriesData)
+        }
+          chart = new Highcharts.chart(curcontainer, chart_param);
+
+        });
+      }
+
+
+    }
+  };
+})(jQuery, Drupal);
+
+
+function getBaseUrl() {
+  var re = new RegExp(/^.*\//);
+  return re.exec(window.location.href);
+}
+
+var primaryArray,
+  secondaryArray,
+  rooturl,
+  curr_value,
+  productList;
+
+
+
+function adjustGraph(chart) {
+    try {
+        if (typeof (chart === 'undefined' || chart === null) && this instanceof jQuery) { // if no obj chart and the context is set
+            this.find('.chart-container:visible').each(function () { // for only visible charts container in the curent context
+                $container = $(this); // context container
+                $container.find('div[id^="chart-"]').each(function () { // for only chart
+                    $chart = $(this).highcharts(); // cast from JQuery to highcharts obj
+                    $chart.setSize($container.width(), $chart.chartHeight, doAnimation = true); // adjust chart size with animation transition
+                });
+            });
+        } else {
+            chart.setSize($('.chart-container:visible').width(), chart.chartHeight, doAnimation = true); // if chart is set, adjust
+        }
+    } catch (err) {
+        // do nothing
+    }
+}

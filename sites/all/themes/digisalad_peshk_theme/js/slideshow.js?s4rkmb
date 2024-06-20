@@ -1,0 +1,37 @@
+function getGridSize() {
+  return (window.innerWidth < 600) ? 2 :
+    (window.innerWidth < 979) ? 3 : 4;
+}
+
+(function ($) {
+  Drupal.behaviors.slideShow = {
+    attach: function (context) {
+      var $window = $(window),
+        flexslider = {vars: {}};
+      var swipe = false;
+
+      $(document).ready(function () {
+
+        $(".flex-slider").flexslider({
+          animation: "slide",
+          animationLoop: false,
+          itemWidth: 290,
+          itemMargin: 5,
+          touch: swipe,
+          minItems: getGridSize(), // use function to pull in initial value
+          maxItems: getGridSize(), // use function to pull in initial value
+          controlNav: false,
+        });
+        // console.log('ready');
+      });
+
+      $window.resize(function () {
+        var gridSize = getGridSize();
+
+        flexslider.vars.minItems = gridSize;
+        flexslider.vars.maxItems = gridSize;
+      });
+    }
+  };
+}(jQuery));
+

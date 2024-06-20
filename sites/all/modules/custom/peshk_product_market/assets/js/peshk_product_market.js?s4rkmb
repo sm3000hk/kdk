@@ -1,0 +1,508 @@
+var peshk_product_page = getParameterByName('page') || 0;
+var peshk_product_current_viewport = "";
+var peshk_product_window_width = jQuery(window).width();
+(function ($) {
+
+  $(document).ready(function() {
+    
+    
+    const _productMarketID = jQuery.cookie("productMarketID") || "";
+    const _productMarketSlug = jQuery.cookie("productMarket") || "";
+    const _productMarketName = jQuery.cookie("productMarketName") || "";
+    const _productMarketFrequency = jQuery.cookie("productMarketFrequency") || "";
+    const _productMarketVoltage = jQuery.cookie("productMarketVoltage") || "";
+
+    if(_productMarketID && _productMarketSlug && _productMarketName) {
+      updateCountrySelectorInfo(_productMarketID, _productMarketSlug, _productMarketName, true);
+    }    
+
+    // if( jQuery('.view.view-catalog-product').length > 0 ) {
+    //   renderFilterBox();
+    //   getProductByMarket();
+    // } else if( jQuery('.view.view-id-catalog_taxonomy').length > 0 ) {
+    //   renderFilterBox();
+    //   getCategoryByMarketForListing();
+    // } else if(jQuery('body').hasClass('page-home')) {
+    //   getCategoryByMarketForHome();
+    // }
+    updateListingContent(true);
+
+    if( jQuery('.page-node.node-type-product').length > 0 ) {
+      if( _productMarketFrequency ) {
+        $frequencyFilter = jQuery('.filter-frequency');
+        $matchOption = $frequencyFilter.find('.filter-option:contains('+_productMarketFrequency+')');
+        if( $matchOption.length > 0 ) {
+          $frequencyFilter.find('.filter-option').removeClass('active');
+          $frequencyFilter.find('.filter-option:contains('+_productMarketFrequency+')').addClass('active');
+        }
+        
+      }
+
+      if( _productMarketVoltage ) {
+        $voltageFilter = jQuery('.filter-voltage');
+        $matchOption = $voltageFilter.find('.filter-option:contains('+_productMarketVoltage+')');
+        if( $matchOption.length > 0 ) {
+          $voltageFilter.find('.filter-option').removeClass('active');
+          $voltageFilter.find('.filter-option:contains('+_productMarketVoltage+')').addClass('active');
+        }
+      }
+    }
+
+
+    if( jQuery('.market-filter-wrapper .fake-select').length > 0 ) {
+    
+      var _scrolled = jQuery(window).width();
+      var action = "update_home_feature_product_category";
+      var productMarket = "";
+        
+      jQuery(document).on('click', '.market-filter-wrapper .fake-select', function() {
+        if( !jQuery(this).hasClass('expanded') ) {
+          jQuery(this).addClass('expanded');
+          jQuery('.view-market-filter').show(); 
+          calculatePopupPos();
+        } else {
+          closeCountrySelector();
+        }
+      });
+
+      jQuery(document).on('click', function(e) {
+        let $target = $(e.target);
+        if( $target.closest('.market-filter-wrapper').length == 0 ) {
+          closeCountrySelector();
+        }
+      });
+    
+      // Recalculate the position of country selector when resize
+      jQuery(window).resize(function () {
+        setTimeout(function() {
+          if( _scrolled == jQuery(window).width() ) {
+            calculatePopupPos();
+          } else {
+            _scrolled = jQuery(window).width();
+          }
+        }, 500);
+      });
+    
+      // Binding event when user clicking any country
+      jQuery(document).on('click', '.view-market-filter a[data-country]', function(e) {
+        e.preventDefault();
+        let country = jQuery(this).data('country');
+        let slug = "";
+        let label = "";
+
+        if( !country ) {
+          window.productMarket = "";
+          window.productMarketID = "";
+        } else {
+          label = jQuery(this).text();
+          slug = jQuery(this).data('slug');
+        }
+        updateCountrySelectorInfo(country, slug, label);
+        
+        closeCountrySelector();
+
+        // updateListingContent();
+        window.location.reload();
+        // if( jQuery('body').hasClass('page-home') ) {
+        //   getCategoryByMarketForHome();
+        // } else if( jQuery('body').hasClass('page-category') && jQuery('.view-id-catalog_product:visible').length > 0 ) {
+        //   getProductByMarket();
+        // } else if( jQuery('body').hasClass('page-category') && jQuery('.view-display-id-page_subcategory').length > 0 ) {
+        //   getCategoryByMarketForListing();
+        // }
+      });
+    
+      // The logic for calculating the position of country selector
+      function calculatePopupPos() {
+        if( jQuery('.market-filter-wrapper .fake-select').hasClass('expanded') ) {
+          // For calculate desktop
+          let maxWidth = jQuery('body').width();
+          let containerWidth = jQuery('.fake-select').offset().left;
+          let moveX = containerWidth;
+    
+          // For calculate screen resolution smaller than 1200px
+          if( jQuery(window).width() >= 1200 ) {
+            containerWidth = jQuery('.main-container').width();
+            moveX = (maxWidth - containerWidth) / 2;
+          } else if( jQuery(window).width() <= 991 ) {
+            moveX = 0;
+          } 
+          
+          jQuery('.view-market-filter').css('transform', 'translateX('+moveX+'px)');
+        }
+      }
+    }
+    
+    
+
+    /* Pagination Handling */
+    jQuery(document).on('click', '.view-catalog-product .pagination li', function() {
+      const urlWithoutStringQuery = window.location.href.replace(/\?.*/, '');
+      let _newPage = peshk_product_page;
+      
+      if( jQuery(this).hasClass('pager-first') ) {
+        _newPage = 0;
+      } else if( jQuery(this).hasClass('prev') ) {
+        --_newPage;
+      } else if( jQuery(this).hasClass('next') ) {
+        _newPage++;
+      } else if( jQuery(this).hasClass('pager-last') ) {
+        _newPage = jQuery('.product-pagination').last().data('page');
+      } else {
+        _newPage = jQuery(this).find('> a').data('page');
+      }
+      
+      window.location.href = urlWithoutStringQuery + '?page=' + _newPage;
+    });
+    
+    
+  });
+})(jQuery);
+
+function getParameterByName(name, url) {
+  url = url || window.location.href;
+  name = name.replace(/[\[\]]/g, '\\$&');
+  var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+      results = regex.exec(url);
+  if (!results) return null;
+  if (!results[2]) return '';
+  return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+
+function updateCountrySelectorInfo(id, slug, name) {
+  window.productMarket = slug;
+  window.productMarketID = id;
+  window.productMarketName = name;
+
+  jQuery.cookie("productMarket", slug, { expires : 1, path : '/' });
+  jQuery.cookie("productMarketID", id, { expires : 1, path : '/',  });
+  jQuery.cookie("productMarketName", name, { expires : 1, path : '/',  });
+
+  updateFrequency("", false);
+  updateVoltage("", false);
+
+  jQuery('.fake-select .current-option').text(name);
+}
+
+function closeCountrySelector() {
+  jQuery('.fake-select').removeClass('expanded');
+  jQuery('.view-market-filter').hide();
+}
+
+function getSelectedMarket(type) {
+
+  return (type && type=='slug') ? window.productMarket : window.productMarketID;
+  
+}
+
+function getCategoryByMarketForHome() {
+  jQuery('body').append('<div class="width-below-768"></div></div><div class="width-above-768"></div>');
+  getCategoryByMarket('home', getSelectedMarket('slug'), 'updateProductMarketSlider');
+  
+  jQuery(window).resize(function(e) {
+    setTimeout(function() {
+      if( peshk_product_window_width == jQuery(window).width() ) {
+        peshk_product_current_viewport = jQuery('.width-above-768').is(':visible') ? "mobile" : "desktop";
+
+        if( peshk_product_current_viewport == 'desktop' && jQuery('.width-below-768').is(':visible') ) {
+          // From Desktop to Mobile view
+          if( jQuery('.market-product-wrapper').hasClass('slick-initialized') ) {
+            jQuery('.market-product-wrapper').slick('unslick');
+          } 
+          peshk_product_current_viewport = "mobile";
+        } else if( peshk_product_current_viewport == 'mobile' && jQuery('.width-above-768').is(':visible') ) {
+          // From Mobile to Desktop view
+          updateProductMarketSlider();
+          peshk_product_current_viewport = "desktop";
+        } else {
+            jQuery('.market-product-wrapper').slick('refresh');
+          
+        }
+      } else {
+        e.stopPropagation();
+        peshk_product_window_width = jQuery(window).width();
+      }  
+    }, 300);
+    
+    
+  });
+
+  // Append View More button
+  $footer = jQuery('<div class="js-view-footer"></div>');
+  $footer.append('<a href="/category" class="product-market-btn-view-all">View All</a>');
+  jQuery('.view-home-feature-category').parent().append($footer);
+}
+
+function updateProductMarketSlider() {
+  if(jQuery('.width-above-768').is(':visible')) {
+    jQuery('.market-product-wrapper').slick({
+      infinite: false,
+      dots: true,
+      slidesToShow: 1,
+      slidesToScroll: 1,
+      vertical: true,
+    });
+  }
+  
+}
+
+function getCategoryByMarketForListing() {
+  //
+  $wrapper = jQuery('.view.view-id-catalog_taxonomy');
+  let _data = {
+    market: getSelectedMarket(),
+    voltage: getSelectedVoltage(),
+    frequence: getSelectedFrequency(),
+  };
+
+  let _url = "";
+  if( $wrapper.hasClass('view-display-id-page_subcategory') ) {
+    let parentCategory = window.location.pathname.replace(/\/category\//i, "").replace(/\/$/, '');
+    _data.parent_category = parentCategory;
+    _url = "/product-market/subcategory";
+  } else {
+    _url = "/product-market/category";
+  }
+
+  jQuery.ajax({
+    method: "GET",
+    url: _url,
+    data: _data, 
+    success: function(data) {
+      if( data ) {
+        $wrapper.find('> .view-content').empty().append(data);
+        $wrapper.addClass('ready');
+      } else {
+        $wrapper.find('> .view-content').empty().append("<div><center>The categories are not available for the market</center></div>");
+      }
+      
+    }
+  });
+}
+
+function getProductByMarket() {
+  $wrapper = jQuery('.view.view-catalog-product');
+  let _url = "/product-market/product";
+  let _category = window.location.pathname.replace(/\/category\//i, "").replace(/\/$/, '');
+  let _market = getSelectedMarket();
+  let _voltage = getSelectedVoltage();
+  let _frequency = getSelectedFrequency();
+
+  let _data = {
+    'market': _market || "",
+    'voltage': _voltage || "",
+    'frequency': _frequency || "",
+    'category': _category || "",
+    'page': peshk_product_page || 0
+  };
+  jQuery.ajax({
+    method: "GET",
+    url: _url,
+    data: _data, 
+    success: function(data) {
+      if( data.html ) {
+        $wrapper.find('.view-content').empty().append(data.html);
+      } else {
+        $wrapper.find('.view-content').empty().append("<div><center>The products are not available for the market</center></div>");
+      }
+      
+      $wrapper.addClass('ready');
+
+      $paginationWrapper = $wrapper.find('.pagination');
+
+      $paginationWrapper.empty();
+      if( data.total_pages > 1 ) {
+        $paginationItem = jQuery('<ul></ul>');
+        for( i = 0; i < data.total_pages; i++ ) {
+          $paginationItem.append('<li><a href="javascript:;" class="product-pagination" data-debug="true" data-page="'+i+'">'+ (i+1) +'</a></li>');
+        }
+
+        $paginationWrapper.empty().append(" \
+          <li class=\"pager-first\"><a title=\"Go to first page\" href=\"javascript:;\">« first</a></li> \
+          <li class=\"prev\"><a title=\"Go to previous page\" href=\"javascript:;\">‹ previous</a></li> \
+          "+$paginationItem.html()+" \
+          <li class=\"next\"><a title=\"Go to next page\" href=\"javascript:;\">next ›</a></li> \
+          <li class=\"pager-last\"><a title=\"Go to last page\" href=\"javascript:;\">last »</a></li> \
+        ");
+
+        $paginationWrapper.find('.product-pagination[data-page='+peshk_product_page+']').parent().addClass('active');
+
+        if(peshk_product_page == 0) {
+          $paginationWrapper.find('.pager-first, .prev').hide();
+        }
+
+        if( peshk_product_page == data.total_pages - 1 ) {
+          $paginationWrapper.find('.pager-last, .next').hide();
+        }
+      }
+    }
+  });
+}
+
+
+function getCategoryByMarket(section, market, callback) {
+  if( jQuery('.market-product-wrapper').hasClass('slick-initialized') ) {
+    jQuery('.market-product-wrapper').slick('unslick');
+  } 
+  
+
+  jQuery.get("/product-market/category/"+section+(market ? "/" + market : ""), function( data ) {
+    let firstContainer = true;
+    let $wrapper = jQuery('.market-product-wrapper');
+    $wrapper.empty();
+
+    $wrapper.append(data);
+    
+    // let $page = jQuery("<div><div class=\"slick-page\"></div></div>"); // For KDK only
+    // let $pageList = $page.find('.slick-page');
+
+    // let $group = jQuery('<div><div class="market-products"></div></div>');
+    // let $groupList = $group.find('.market-products'); 
+    // data.forEach(function(obj) {
+    //   let _name = obj.name || "";
+    //   let _thumbnail = obj.thumbnail || "";
+    //   let _url = obj.url_name ? "category/" + obj.url_name : "";
+
+      // $groupList.append(" \
+      //   <div class=\"views-row views-row-1\"> \
+      //     <div class=\"views-field views-field-field-category-thumbnail-\"> \
+      //       <div class=\"field-content\"> \
+      //         <a href=\""+_url+"\"> \
+      //           <img class=\"img-responsive\" src=\""+_thumbnail+"\" alt=\""+_name+"\" title=\""+_name+"\"> \
+      //         </a> \
+      //       </div> \
+      //     </div> \
+      //     <div class=\"views-field views-field-name\"> \
+      //       <span class=\"field-content\"> \
+      //         <a href=\""+_url+"\">"+_name+"</a> \
+      //       </span> \
+      //     </div> \
+      //   </div> \
+      // ");
+
+      /* Updated for KDK */
+    //   if( firstContainer || $groupList.find('.views-row').length == 4 ) {
+    //     $pageList.append($group.html());
+    //     $groupList.empty();
+    //     firstContainer = false;
+    //   }
+
+    //   if( $pageList.find('.market-products').length == 2 ) {
+    //     $wrapper.append($page.html());
+    //     $pageList.empty();
+    //     firstContainer = true;
+    //   }
+     
+    // })
+    // if( $groupList.find('.views-row').length > 0 ) {
+    //   $pageList.append($group.html());
+    //   $groupList.empty();
+    // }
+
+    // if( $pageList.find('.market-products').length > 0 ) {
+    //   $wrapper.append($page.html());
+    //   $pageList.empty();
+    // }
+     /* Updated for KDK */
+    
+    if( callback ) {
+      window['updateProductMarketSlider']();
+    }
+    
+  })
+}
+
+function updateListingContent(initial) {
+  initial = initial || false;
+
+  if( jQuery('.view.view-catalog-product').length > 0 ) {
+    // if(initial) {
+    //   renderFilterBox();
+    // }
+    
+    getProductByMarket();
+  } else if( jQuery('.view.view-id-catalog_taxonomy').length > 0 ) {
+    // if(initial) {
+    //   renderFilterBox();
+    // }
+    getCategoryByMarketForListing();
+  } else if(jQuery('body').hasClass('page-home')) {
+    getCategoryByMarketForHome();
+  }
+}
+
+function renderFilterBox() {
+  jQuery.ajax({
+    url: "/product-market/frequencies",
+    method: "GET",
+    dataType: 'html',
+    data: {
+      market: getSelectedMarket('id')
+    },
+    success: function(data) {
+      // var $wrapper = jQuery("<div class=\"market-extra-filter-wrapper\"></div>");
+      // ['frequency', 'voltage'].forEach(function(type) {
+        // let label = "";
+        // if(type == 'frequency') { label = 'Select Frequency'; }
+        // else if(type == 'voltage') { label = 'Select Voltage'; }
+        // $filterWrapper = jQuery(" \
+        //   <div  class=\"market-"+type+"-wrapper\"> \
+        //     <select class=\"middle-size\"> \
+        //       <option value=\"\">"+label+"</option> \
+        //     </select> \
+        //   </div>");
+        // data[type].forEach(function(item) {
+        //   $filterOption = jQuery("<option value=\""+item+"\">"+item+"</option>");
+        //   if( item == window[type] ) {
+        //     $filterOption.attr('selected', 'selected');
+        //   }
+        //   $filterWrapper.find('select').append($filterOption);
+        // });
+        // $wrapper.append($filterWrapper);
+      // });
+
+      // Append frequency & voltage filter
+      jQuery('.view-catalog-taxonomy > .view-header').append(data);
+      jQuery(document).on('change', '.market-frequency-wrapper select, .market-voltage-wrapper select', function() {
+        if( jQuery(this).parent().hasClass('market-frequency-wrapper') ) {
+          updateFrequency( jQuery(this).val() );
+        } else if( jQuery(this).parent().hasClass('market-voltage-wrapper') ) {
+          updateVoltage( jQuery(this).val() );
+        }
+      });
+
+      jQuery('.market-frequency-wrapper select [value='+window['frequency']+']').attr('selected', 'selected').prop("selected", true);
+
+      jQuery('.market-voltage-wrapper select [value='+window['voltage']+']').attr('selected', 'selected').prop("selected", true);
+    },
+    
+  })
+
+  
+}
+
+function updateFrequency(val, reload) {
+  reload = (reload == false) ? false : true;
+  const urlWithoutStringQuery = window.location.href.replace(/\?.*/, '');
+  window.frequency = val;
+  jQuery.cookie("productMarketFrequency", val, { expires : 1, path : '/' });
+  _peshk_product_page = 0;
+  if( reload ) {
+    window.location.href = urlWithoutStringQuery;
+  }
+}
+function updateVoltage(val, reload) {
+  reload = (reload == false) ? false : true;
+  const urlWithoutStringQuery = window.location.href.replace(/\?.*/, '');
+  window.voltage = val;
+  jQuery.cookie("productMarketVoltage", val, { expires : 1, path : '/' });
+  if( reload ) {
+    window.location.href = urlWithoutStringQuery;
+  }
+}
+function getSelectedFrequency() {
+  return window.frequency || "";
+}
+function getSelectedVoltage() {
+  return window.voltage || "";
+}

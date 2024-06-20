@@ -1,0 +1,13 @@
+jQuery(document).ready(function ($) {
+  if ($('.top-banner').length > 0) {
+    if ($('.top-banner img').attr('src') != "") {
+      if ($('.top-banner img').css('background-image') == "none") {
+        $('.top-banner').css('background-image', "url('" + $('.top-banner img').attr('src') + "')");
+      }
+      $('.top-banner img').hide();
+    } else {
+      $('.top-banner').remove();
+    }
+    $('.top-banner .page-title').remove();
+  }
+});

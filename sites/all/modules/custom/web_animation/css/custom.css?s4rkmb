@@ -1,0 +1,49 @@
+.page-home-ventilation .main-container {
+  max-width: 1030px;
+  width: 100%;
+}
+.page-home-ventilation .cms_button {
+  padding: 5px;
+  border: 1px solid #1F1F1F;
+}
+@media only screen and (max-width: 640px) {
+  .page-home-ventilation .cms_button {
+    position: relative;
+    top: 15px;
+  }
+}
+.page-home-ventilation .title {
+  font-family: "Helvetica", "Arial", sans-serif;
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  color: #1F1F1F;
+  margin-bottom: 25px;
+}
+@media only screen and (max-width: 640px) {
+  .page-home-ventilation .title {
+    font-size: 20px;
+    line-height: 1.5;
+    letter-spacing: normal;
+  }
+}
+.page-home-ventilation .description {
+  max-width: 800px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #1F1F1F;
+  margin: 0px auto 25px;
+}
+@media only screen and (max-width: 640px) {
+  .page-home-ventilation .description {
+    font-size: 14px;
+    line-height: 1.43;
+  }
+}
+.page-home-ventilation iframe#web_animation {
+  border: none;
+  width: 100%;
+  height: 700px;
+}
+
+/*# sourceMappingURL=custom.css.map */

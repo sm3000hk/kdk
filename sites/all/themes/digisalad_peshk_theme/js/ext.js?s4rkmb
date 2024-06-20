@@ -1,0 +1,144 @@
+jQuery(document).ready(function($){
+	
+	$('.search-form .form-actions .custom-search-button').attr('tabindex','-1');
+	$('.view-home-feature-category .more-link a').attr('tabindex',0);
+	$('.region-hero .view-slideshow .field-slideshow-controls a').attr('tabindex','0')
+
+	$('.views-field-field-knowledge-thumbnail a img').each(function(){
+		$(this).attr('alt',$(this).parents('.views-field-field-knowledge-thumbnail').find('.know-img-text').text());
+	})
+	$('.view-installation-demonstration .views-row').each(function(){
+		$(this).find('img').attr('tabindex','0')
+	})
+	$('.view-installation-demonstration .views-row,.region-hero .view-slideshow .field-slideshow-controls a').on('keypress',function(e){
+		if(e.which == 13) {
+	        $(this).trigger('click')
+	    }
+		
+	})
+	var optiontxt = '';
+	var defaultOptionText = 'Please Select';
+	$('.view-news.view-display-id-block_1 li a').each(function(){
+		optiontxt +='<option href="'+$(this).attr('href')+'" '+($(this).hasClass('active')?"selected=\"selected\"":"")+'>'+$(this).text()+'</option>';
+		if($(this).hasClass('active')){
+			$('#newsyear').siblings('.select-label').text($(this).text())
+		}
+	})
+	$('#newsyear').prepend(optiontxt);
+    $('#newsyear').prepend('<option href="'+$(".view-news.view-display-id-block_1").prev().attr('href')+'" >' + defaultOptionText + '</option>');
+    if ($('#newsyear').siblings('.select-label').text() === "") {
+        $('#newsyear').siblings('.select-label').html(defaultOptionText);
+        $('#newsyear option:eq(0)').attr("selected", "selected");
+    }
+	$('.select-wrap select').on('change',function(){
+		document.location.href=$(this).find('option:selected').attr('href');
+	})
+	
+	$('.select-wrap span').on('click',function(){
+		$(this).siblings('select').click()
+	})
+	$('form#search-block-form button.btn.btn-primary .glyphicon').text('search')
+	$('#cboxPrevious').text('Previous')
+	$('#cboxNext').text('Next')
+	$('#cboxSlideshow').text('Slideshow')
+	
+	
+	$('a[href="#"]').removeAttr('href')
+	$('#sliding-popup .popup-content #popup-buttons .agree-button').appendTo("#sliding-popup .popup-content #popup-text")
+	
+	$('.mobile-search').click(function(){
+		$('.mobile-search-wrap').slideToggle();
+	});
+	
+	$(window).resize(function(){
+    var width = $(window).width();
+  		if(width > 979){
+  			$('.mobile-search-wrap').slideUp();
+  		}
+  });
+	
+	$('.mobile-product-nav').on('change', function(){
+		var selected_val = $(this).val();
+		$('.node-product .nav-pills li a[href="'+selected_val+'"]').click();
+	});
+
+	$('.node-product .nav-pills li a').click(function(){
+		$('.mobile-product-nav').val($(this).attr('href'));
+	})
+	
+	$('.spec-table .group-weight, .spec-table .group-installation-space, .spec-table .group-duct-size, .spec-table .group-ambient-temperature').addClass('half-width-spec');
+	
+	$('.node-product-specification').each(function(){
+		var i=0;
+		$(this).find(".half-width-spec").each(function(){
+			i++;
+			$(this).addClass((i%2!=0?"odd":""))
+		})
+	})
+	
+	$('.node-product-specification a').wrap("<div class=\"panel-title fieldset-legend\"></div>").find('span').unwrap()
+	$('.spec-table .field-group-format-wrapper').removeClass('field-group-format-wrapper')
+	
+	// jQuery('.node-product-specification .field-item,.hero-spec-value').each(function(){
+		// if(jQuery(this).text().match(/^[0-9.]+$/)){
+			// jQuery(this).text(Math.round(jQuery(this).text()));
+		// }	
+	// })
+	jQuery( ".tab-content .hero-spec-label:contains(min-1),.tab-content .panel-title:contains(min-1)" ).each(function(){
+		$(this).html($(this).html().replace("min-1","min<sup>-1</sup>"))
+	})
+	jQuery( ".tab-content .hero-spec-label:contains(m3/min),.tab-content .panel-title:contains(m3/min)" ).each(function(){
+		jQuery(this).html(jQuery(this).html().replace("m3/min","m<sup>3</sup>/min"))
+	})
+	jQuery( ".tab-content .hero-spec-label:contains(Humidigying),.tab-content .panel-title:contains(Humidigying)" ).each(function(){
+		jQuery(this).html(jQuery(this).html().replace("Humidigying","Humidifying"))
+	})
+	
+	jQuery('.hero-spec-row .hero-spec-label').each(function(){
+		mystring = jQuery(this).text().replace('Normal', '');
+		jQuery(this).text(mystring);
+	});
+	jQuery('.pagetop').click(function(){
+		jQuery("html, body").animate({ scrollTop: 0 }, "slow");
+		return false;
+	});
+	
+	jQuery('#search-api-page-search-form-search button').html('<span class="icon glyphicon glyphicon-search" aria-hidden="true"></span>');
+	jQuery('#search-api-page-search-form button').html('<span class="icon glyphicon glyphicon-search" aria-hidden="true"></span>');
+	jQuery('.mobile-search-wrap button').html('<span class="icon glyphicon glyphicon-search" aria-hidden="true"></span>');
+	jQuery('#search-api-page-search-form-search input[type=text]').attr('placeholder','Search'); 
+	jQuery('.mobile-search-wrap input[type=text]').attr('placeholder','Search...'); 
+	jQuery('.search-result .search-info').remove(); 
+});
+ 
+
+jQuery(window).load(function($){
+	jQuery('a[href="#"]').removeAttr('href'); 
+	
+	jQuery( ".tab-content .hero-spec-label:contains(min-1),.tab-content .panel-title:contains(min-1)" ).each(function(){
+		jQuery(this).html(jQuery(this).html().replace("min-1","min<sup>-1</sup>"))
+	})
+	jQuery( ".tab-content .hero-spec-label:contains(m3/min),.tab-content .panel-title:contains(m3/min)" ).each(function(){
+		jQuery(this).html(jQuery(this).html().replace("m3/min","m<sup>3</sup>/min"))
+	})
+
+	jQuery( ".tab-content .hero-spec-label:contains(Humidigying),.tab-content .panel-title:contains(Humidigying)" ).each(function(){
+		jQuery(this).html(jQuery(this).html().replace("Humidigying","Humidifying"))
+	})
+	jQuery('.view.view-catalog-taxonomy.view-id-catalog_taxonomy.view-display-id-page_subcategory > .view-content .views-row, .view.view-catalog-taxonomy.view-id-catalog_taxonomy.view-display-id-page > .view-content .views-row').each(function(){
+		
+		jQuery(this).find('.img-responsive').parent().addClass('product-image');
+		jQuery(this).find('.img-responsive').parent().css('background-image', 'url(' + jQuery(this).find('img').attr('src') + ')');
+		jQuery(this).find('.product-image').attr('title',jQuery(this).find('.field-content a').text()); 
+	}); 
+
+	jQuery('.pane-block.pane-menu-menu-homepage-feature-menu li.leaf').each(function(){
+		jQuery(this).find('img').attr('alt', jQuery(this).find('span').text());
+	});
+	
+})
+
+function resizeText(size) {
+	jQuery('body').removeClass('small medium large');
+	jQuery('body').addClass(size);
+}

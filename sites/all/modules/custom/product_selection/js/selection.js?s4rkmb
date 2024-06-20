@@ -1,0 +1,364 @@
+(function ($, Drupal) {
+
+    Drupal.behaviors.product_selection = {
+        attach: function (context, settings) {
+
+            function lengthConvert(value, from, to) {
+                var mAndMMConversion = 1000;
+                var mAndFeetConversion = 3.28084;
+
+                var fromFactor = from === 'mm' ? mAndMMConversion : (from === 'feet' ? mAndFeetConversion : 1);
+                var toFactor = to === 'mm' ? mAndMMConversion : (to === 'feet' ? mAndFeetConversion : 1);
+
+                return parseFloat(value) / fromFactor * toFactor;
+            }
+
+            function round(value, decimals) {
+                return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+            }
+
+            function lossCoefficientConvert(rd) {
+
+                if (rd > 1 && rd < 1.5) rd = 1;
+                else if (rd > 1.5 && rd < 2) rd = 1.5;
+                else if (rd > 2) rd = 2;
+
+                var map = {
+                    0.5: 0.71,
+                    0.75: 0.33,
+                    1: 0.22,
+                    1.5: 0.15,
+                    2: 0.13
+                };
+                return map[rd]
+            }
+
+            //category and subcategory
+            var category_id = $(".product-selection select[name=category]").val();
+            var subSelect = $(".product-selection select[name=sub_category]");
+
+            subSelect.attr('disabled', false).find('option:not(:first)').remove();
+
+            if ($(document).find('.product-selection').length) {
+                if (typeof categories !== 'undefined' && category_id !== "-1") {
+                    $.each(categories[category_id]['childs'], function (index, value) {
+                        subSelect.append($('<option/>', {
+                            value: value['tid'],
+                            text: value['name']
+                        }));
+                    });
+                }
+            }
+
+
+            $(".product-selection select[name=category]").change(function () {
+                // console.log(categories);
+                var subSelect = $(".product-selection select[name=sub_category]");
+                subSelect.attr('disabled', false).find('option:not(:first)').remove();
+                $.each(categories[this.value].childs, function (index, value) {
+                    subSelect.append($('<option/>', {
+                        value: value.tid,
+                        text: value.name
+                    }));
+                });
+                // console.log(this.value);
+            });
+
+            //calculator tab update
+            $(".nav.air-volume-nav .nav-item").click(function () {
+                $(".air-volume-nav-mobile option:eq(" + ($(this).attr("tabindex") - 1) + ")").prop('selected', true);
+                // $(".air-volume-nav-mobile").options[($(this).attr("tabindex"))].selected = true;
+                // console.log($(".air-volume-nav-mobile"));
+            });
+            $(".air-volume-nav-mobile").on("change", function (index) {
+                $(".tab-content.calculator-tab .tab-pane").each(function () {
+                    $(this).removeClass("active");
+                });
+                $(".nav.air-volume-nav .nav-item").each(function () {
+                    $(this).removeClass("active");
+                });
+                $(".nav.air-volume-nav .nav-item[tabindex=" + (index.target.selectedIndex + 1) + "]").addClass("active");
+                $($(this).val()).addClass("active");
+            });
+
+            /*-----calculator air volume by air change-----*/
+            $(".product-selection select[name=cal_air_change_premise]").change(function () {
+                var subSelect = $(".product-selection select[name=cal_air_change_area]");
+                subSelect.attr('disabled', false).find('option:not(:first)').remove();
+                $.each(achAreas[this.value]['childs'], function (index, value) {
+                    subSelect.append($('<option/>', {
+                        value: value['tid'],
+                        text: value['name'],
+                        "data-ach": value['field_air_change_per_hour']
+                    }));
+                });
+            });
+
+            $("#btn-av-by-ach").click(function (e) {
+                e.preventDefault();
+                var area = $("select[name=cal_air_change_area]");
+                var h = $("input[name=cal_air_change_height]").val();
+                var l = $("input[name=cal_air_change_length]").val();
+                var w = $("input[name=cal_air_change_width]").val();
+
+                if (area.val().length === 0 || h.length === 0 || l.length === 0 || w.length === 0) {
+                    alert("Please complete the form.");
+                    return false;
+                }
+
+                //convert unit to base meter
+                var unit = $("select[name=cal_air_change_size_unit]").val();
+                h = lengthConvert(h, unit, 'm');
+                l = lengthConvert(l, unit, 'm');
+                w = lengthConvert(w, unit, 'm');
+
+                var ach = area.find(":selected").data("ach");
+                var conversion = $("select[name=air_volume_unit] :selected").data("conversion");
+
+                //Required Air Volume [m3/h] = Room size [m3] x Air Change Per Hour
+                var result = math.eval((h * l * w * ach) / 3.6 * conversion);
+                $("input[name=air_volume]").val(round(result, 2));//TODO decimal TBC
+
+                $(".calculate-type > li").removeClass("active");
+                $(".tab-content.type-tab > .tab-pane").removeClass("active");
+            });
+
+            /*-----calculator air volume by occupant-----*/
+            $(".product-selection select[name=cal_air_rate_occupant]").change(function () {
+                var subSelect = $(".product-selection select[name=cal_air_rate_room]");
+                subSelect.attr('disabled', false).find('option:not(:first)').remove();
+                $.each(occupantAirRates[this.value]['childs'], function (index, value) {
+                    subSelect.append($('<option/>', {
+                        value: value['tid'],
+                        text: value['name'],
+                        "data-people-rate": value['field_people_outdoor_air_rate_ls'],
+                        "data-area-rate": value['field_area_outdoor_air_rate_lsm2'],
+                        "data-density": value['field_occupant_density_100m2'],
+                        "data-fixed-rate": value['field_exhaust_airflow_rate_l_s'],
+                    }));
+                });
+            });
+
+            $(".product-selection select[name=cal_air_rate_room]").change(function () {
+                var fixedRate = $(this).find(":selected").data("fixed-rate");
+                var areaFields = $("input[name=cal_air_rate_length], input[name=cal_air_rate_width]");
+                if (fixedRate) {
+                    areaFields.attr("disabled", true).val("");
+                } else {
+                    areaFields.attr("disabled", false);
+                }
+            });
+
+            $("#btn-av-by-occupant").click(function (e) {
+                e.preventDefault();
+                var room = $("select[name=cal_air_rate_room]");
+                var l = $("input[name=cal_air_rate_length]").val();
+                var w = $("input[name=cal_air_rate_width]").val();
+
+                if (room.val().length === 0 || l.length === 0 || w.length === 0) {
+                    alert("Please complete the form.");
+                    return false;
+                }
+
+                //convert unit to base meter
+                var unit = $("select[name=cal_air_rate_area_unit]").val();
+                l = lengthConvert(l, unit, 'm');
+                w = lengthConvert(w, unit, 'm');
+
+                var fixedRate = room.find(":selected").data("fixed-rate");
+                var result = null;
+
+                if (fixedRate) {
+                    result = fixedRate;
+                } else {
+
+                    var peopleRate = room.find(":selected").data("people-rate");
+                    var areaRate = room.find(":selected").data("area-rate");
+                    var density = room.find(":selected").data("density");
+
+                    //Required Air Volume [L/s] = PeopleRate x (Density x Area[m2] / 100) + AreaRate x Area[m2]
+                    result = math.eval(peopleRate * (density * (l * w) / 100) + (areaRate * (l * w)));
+                }
+
+                // $("input[name=air_volume_m3h]").val(round(result));
+                var conversion = $("select[name=air_volume_unit] :selected").data("conversion");
+                result = math.eval(result * conversion);
+                $("input[name=air_volume]").val(round(result));//TODO decimal TBC
+            });
+
+
+            $("#btn-static-pressure").click(function (e) {
+                e.preventDefault();
+
+                var acceleration = 9.80665;
+                var airDensity = 1.2;
+                var airVolume = $("input[name=air_volume]").val();
+                var friction = $("select[name=cal_static_pressure_duct_material]").val();
+                var ductLength = $("input[name=cal_static_pressure_duct_length]").val();
+                var ductDiameter = $("select[name=cal_static_pressure_duct_diameter]").val();
+                var elbowRadius = $("select[name=cal_static_pressure_radius_elbow]").val();
+                var elbowCount = $("input[name=cal_static_pressure_elbow_count]").val();
+                var pi = 3.14159265358979;
+
+                //duct resistant
+                var velocity = math.eval((airVolume / ((ductDiameter / 1000) ^ 2) * (4 / (3600 * pi))));
+                var ductResistant = math.eval(friction * (airDensity / (2 * acceleration)) * (ductLength / (ductDiameter / 1000)) * (velocity ^ 2) * acceleration);
+
+                //elbow resistance
+                var lossCoefficient = lossCoefficientConvert(elbowRadius / ductDiameter);
+                var elbowResistance = math.eval((lossCoefficient * (airDensity * ((velocity ^ 2) / (2 * acceleration))) * acceleration) * elbowCount);
+
+                var subtotal = ductResistant + elbowResistance;
+
+                //wallcap
+                var wallCapChoice = $("select[name=cal_static_pressure_wall_cap]").find(":selected");
+                if (wallCapChoice.val()) {
+                    var wallCapResistant = math.eval(friction * (airDensity / (2 * acceleration)) * (wallCapChoice.val() / (ductDiameter / 1000)) * (velocity ^ 2) * acceleration);
+                    subtotal += wallCapResistant
+                }
+
+                //louver
+                var louverChoice = $("select[name=cal_static_pressure_grille_louver]").find(":selected");
+                if (louverChoice.val()) {
+                    var louverResistant = math.eval(friction * (airDensity / (2 * acceleration)) * (louverChoice.val() / (ductDiameter / 1000)) * (velocity ^ 2) * acceleration);
+                    subtotal += louverResistant
+                }
+
+                var staticPressure = Math.round(math.eval(subtotal * 1.2));
+                // $("input[name=static_pressure_pa]").val(staticPressure);
+
+                var conversion = $('select[name=static_pressure_unit]').find(":selected").data('conversion');
+                staticPressure *= conversion;
+                $("input[name=static_pressure]").val(staticPressure)
+
+                $(".calculate-type > li").removeClass("active");
+                $(".tab-content.type-tab > .tab-pane").removeClass("active");
+            });
+
+            //duct diameter changes
+            $("select[name=cal_static_pressure_duct_diameter]").change(function () {
+                //elbow radius
+                var radius = [100, 150, 200, 250, 300];
+                var diameter = $(this).val();
+                var choices = radius.filter(function (opt) {
+                    return opt >= diameter
+                });
+                $("select[name=cal_static_pressure_radius_elbow]").find("option").remove();
+                choices.map(function (choice) {
+                    $("select[name=cal_static_pressure_radius_elbow]").append($('<option>', {
+                        value: choice,
+                        text: choice
+                    }));
+                });
+                //wall caps
+                $("select[name=cal_static_pressure_wall_cap] > option").each(function () {
+                    $(this).attr('disabled', $(this).data('diameter') < diameter);
+                    if ($(this).is(':selected') && $(this).attr('disabled')) {
+                        $(this).prop("selected", false)
+                    }
+                });
+                //grille louver
+                $("select[name=cal_static_pressure_grille_louver] > option").each(function () {
+                    $(this).attr('disabled', $(this).data('diameter') < diameter);
+                    if ($(this).is(':selected') && $(this).attr('disabled')) {
+                        $(this).prop("selected", false)
+                    }
+                });
+
+            });
+
+            //input and unit
+            // $("input[name=static_pressure]").keyup(function () {
+            //     var conversion = $("select[name=static_pressure_unit]").find(':selected').data('conversion');
+            //     var inPa = parseFloat($(this).val()) / conversion;
+            //     $("input[name=static_pressure_pa]").val(inPa);
+            // });
+            //
+            // $("input[name=air_volume]").keyup(function () {
+            //     var conversion = $("select[name=air_volume_unit]").find(':selected').data('conversion');
+            //     var inM3h = Math.round( ( parseFloat($(this).val()) / conversion ) * 3.6 ) ; //3.6 = convert L/sto m3/h
+            //     // console.log(inM3h);
+            //     $("input[name=air_volume_m3h]").val(inM3h);
+            // });
+
+
+            //calculator deselect
+            $(".nav.calculate-type .nav-item").click(function () {
+                if ($(this).hasClass("active")) {
+                    var navItem = $(this);
+                    setTimeout(function () {
+                        navItem.removeClass("active").focusout();
+                        $(".calculator-container .type-tab > .tab-pane").removeClass("active");
+                    }, 50);
+                }
+
+                $('#calculator-type-tab a[href="#' + $(this).attr('data') + '"]').tab('show');
+                setMobileTabClass($(this).attr('data'));
+            });
+
+            // Responsive Input Values Tab
+            function setMobileTabClass(tab) {
+                $('.mobile-nav-tab').removeClass('active');
+                $('#mobile-' + tab).addClass('active');
+            }
+
+            function setMobileTabContent(tab) {
+                if ($('#mobile-' + tab).hasClass("active")) {
+                    $('#mobile-' + tab + '-content').show();
+                    $('#calculator-type-tab-content').appendTo('#mobile-' + tab + '-content');
+                }
+            }
+
+            function locateTabContent() {
+                tab = $("#calculator-type-tab-content > .tab-pane.active").attr('id');
+                if ($(window).width() >= 767) {
+                    $('#calculator-type-tab-content').insertAfter($('#calculator-type-tab'));
+                    if (!$('#mobile-' + tab).hasClass("active")) {
+                        $('#mobile-' + tab + '-content').hide();
+                    }
+                } else {
+                    setMobileTabContent(tab);
+                }
+            }
+
+            $(".mobile-nav-tab").click(function () {
+                if ($(this).hasClass("active")) {
+                    var navItem = $(this);
+                    // setTimeout(function () {
+                    navItem.removeClass("active").focusout();
+                    $(".calculator-container .type-tab > .tab-pane").removeClass("active");
+                    navItem.next().hide();
+                    // }, 50);
+                } else {
+                    $(this).addClass("active")
+
+                    $("html, body").animate({
+                        scrollTop: $("#calculator-type-tab-content").offset().top - $(".navbar").height() - parseInt($("body.admin-menu").css('marginTop'))
+                    }, 1000);
+                }
+
+                $('#calculator-type-tab a[href="#' + $(this).attr('data') + '"]').tab('show');
+                setMobileTabClass($(this).attr('data'));
+                setMobileTabContent($(this).attr('data'));
+            });
+
+            $(window).resize(locateTabContent);
+            locateTabContent();
+
+            // $('.product-selection .static-pressure select').change(function(){
+            //     var text = $(this).find('option:selected').text();
+            //     var $aux = $('<select/>').append($('<option/>').text(text));
+            //     $(this).after($aux);
+            //     console.log($aux);
+            //     console.log($aux.width());
+            //     console.log($aux.width() + 56);
+            //     $(this).css( "maxWidth", $aux.width() + 56 );
+            //
+            //     $aux.remove();
+            //     console.log(text);
+            // })
+
+        }
+    };
+
+})(jQuery, Drupal);

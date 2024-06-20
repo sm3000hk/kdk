@@ -1,0 +1,327 @@
+var amca_product = false;
+
+jQuery(document).ready(function ($) {
+    $( window ).scroll(function() {
+        fixHeader();
+    });
+    $( window ).resize(function() {
+        fixHeader();
+    });
+
+    // $( ".navbar-toggle" ).click(function() {
+    //     setTimeout(fixHeader(), 3000);
+    // });
+
+
+    function fixHeader(){
+        var body = $("body");
+        var header = $("#navbar");
+        var siteContent = $(".site-content");
+        var breadcrumb = $(".breadcrumb");
+        var comparisonButton = $(".comparison-button_container");
+        var cookies = $("#sliding-popup");
+        var adminMenu = $("#admin-menu");
+
+        // For NavBar
+        if ($(this).scrollTop() > 0) {
+            body.css("padding-top", cookies.height() + header.height() - adminMenu.height());
+            header.css("top", cookies.height() + adminMenu.height());
+            header.addClass("sticky");
+            cookies.addClass("sticky");
+        } else {
+            body.css("padding-top", "0px");
+            header.css("top", "0px");
+            header.removeClass("sticky");
+            cookies.removeClass("sticky");
+        }
+
+        // For Breadcrumb
+        if ($(this).scrollTop() > siteContent.offset().top - header.height() - cookies.height() - adminMenu.height() + 16 && breadcrumb.length !== 0) {  // 16 is breadcrumb margin-top size
+            breadcrumb.css("top", cookies.height() + header.height() + adminMenu.height() );
+            breadcrumb.addClass("sticky");
+            comparisonButton.css("top", cookies.height() + header.height() + adminMenu.height() );
+            comparisonButton.addClass("sticky");
+            siteContent.addClass("sticky");
+        } else {
+            breadcrumb.css("top", "0px");
+            breadcrumb.removeClass("sticky");
+            comparisonButton.css("top", "0px");
+            comparisonButton.removeClass("sticky");
+            siteContent.removeClass("sticky");
+        }
+    }
+
+    // Catalogue page
+    if( $('.view-catalogue').length > 0 ) {
+
+        // Apply filter when changing filter option 
+        const _page = $('.view-catalogue');
+        _page.find('.views-exposed-form #edit-field-country-tid-i18n').on('change', function() {
+            $(this).parents('.views-exposed-widgets').find('.form-submit').trigger('click');
+        });
+
+        // Update pagination layout
+        if( $('.view-catalogue .pagination').length > 0 ) {
+            let _pagingationPages = $('.pagination li:not(.pager-first):not(.prev):not(.next):not(.pager-last)');
+
+            let _showPaginationPages = [ 1 ];
+            // Adding Last page to array
+            const _lastPage = parseInt(_pagingationPages.last().text());
+            if(!_showPaginationPages.includes(_lastPage)) {
+                _showPaginationPages.push(_lastPage);
+            }
+            // Adding active page to array
+            const _currentPage = parseInt($('.pagination li.active').text());
+            if(!_showPaginationPages.includes(_currentPage)) {
+                _showPaginationPages.push(_currentPage);
+            }
+            // Adding active page +1 / -1 page to array
+            const _beforeActivePage = parseInt(_currentPage - 1);
+            const _afterActivePage = parseInt(_currentPage + 1);
+            if( _beforeActivePage > 0 && !_showPaginationPages.includes(_beforeActivePage)) {
+                _showPaginationPages.push(_beforeActivePage);
+            }
+            if( _afterActivePage <= _lastPage && !_showPaginationPages.includes(_afterActivePage)) {
+                _showPaginationPages.push(_afterActivePage);
+            }
+
+            // Show 1 more page if first or last
+            if( _currentPage == 1 ) {
+                if( (_currentPage + 2) <= _lastPage && !_showPaginationPages.includes((_currentPage + 2)) ) {
+                    _showPaginationPages.push(_currentPage + 2);
+                }                
+            } else if(_currentPage == _lastPage) {
+                if((_currentPage - 2) > 0 && !_showPaginationPages.includes((_currentPage - 2))) {
+                    _showPaginationPages.push(_currentPage - 2);
+                }
+            }
+
+            var _showDotDotDot = false;
+            $('.pagination li:not(.pager-first):not(.prev):not(.next):not(.pager-last)').each(function() {
+                if( !_showPaginationPages.includes(parseInt( $(this).text() )) ) {
+                    if(!_showDotDotDot) {
+                        $(this).html('<span>...</span>').addClass('ignored');
+                        _showDotDotDot = true;
+                    } else {
+                        $(this).remove();
+                    }
+                } else {
+                    _showDotDotDot = false;
+                }
+            });
+        }
+    }
+
+    // Homepage - Carousel 
+    if( $('.feature-menu').length > 0 ) {
+        $('.feature-menu .pane-content ul li').each(function() {
+            $(this).removeClass('leaf col-sm-4');
+        });
+
+        $('.feature-menu .pane-content ul').slick({
+            centerMode: true,
+            centerPadding: '0px',
+            slidesToShow:3,
+            slidesToScroll:1, 
+            dots:true,
+            infinite: true,
+            // autoplay: true,
+            // autoplaySpeed: 4000,
+            responsive: [
+                {
+                    breakpoint: 992,
+                    settings: {
+                        centerMode: true,
+                        centerPadding: '0px',
+                        slidesToShow: 2,
+                        slidesToScroll:1,
+                    }
+                },
+                {
+                    breakpoint: 768,
+                    settings: {
+                        centerMode: true,
+                        centerPadding: '40px',
+                        slidesToShow: 1,
+                        slidesToScroll:1,
+                    }
+                    
+                },
+            ]
+        });
+
+        redoControlChange();
+
+        $(window).resize(function() {
+            setTimeout(function() {
+                if( $('.feature-menu .slick-slider .slick-prev').index() === 0 ) {
+                    redoControlChange();
+                }
+            }, 100);
+        });
+
+        function redoControlChange() {
+            var $slider = $('.feature-menu .slick-slider');
+            var $slider_content = $('.feature-menu .slick-slider').find('.slick-list');
+            var $slider_next = $('.feature-menu .slick-slider').find('.slick-next');
+            $slider.prepend($slider_content);
+            $slider.append($slider_next);
+        }
+    }
+
+    // Video Center
+    if($('body').hasClass('page-solution-centre-video-centre')) {
+
+        $('.demo-group .views-row').each(function() { // the containers for all your galleries
+			var videotranscript = "";
+			if($(this).find('.views-field-field-video-transcript').length>0){
+				videotranscript = '<a class="download-transcript" download="download" href="'+$(this).find('.views-field-field-video-transcript').text().trim()+'">Download a transcript of this video</a>';
+			}
+			if($(this).find('.views-field-field-youtube-link').length>0){
+				var youtubelink = $(this).find('.views-field-field-youtube-link').text().trim();
+				$(this).magnificPopup({
+					items: {
+					      src: '<div class="white-window"><div class="videoWrapper"><iframe width="560" height="315" src="'+youtubelink+'" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div></div>',
+					      type: 'inline'
+					  }
+				});
+			}else if($(this).find('.views-field-field-video-file').length>0){			
+			    $(this).magnificPopup({
+				  items: {
+				      src: '<div class="white-window"><video controls src="'+$(this).find('.views-field-field-video-file').text().trim()+'"></video>'+videotranscript+'</div>',
+				      type: 'inline'
+				  }
+				});
+			}
+		});
+    }
+
+    /** AMCA */
+    if(jQuery('.product-specification-tab').length > 0) {
+        jQuery('.amca-buttons-wrapper .btn-general').click(function() {
+            if(jQuery(this).parents('.product-comparison').length == 0) {
+                let current_voltage = jQuery('#specification .filter-voltage .filter-option.active').text();
+                let current_frequency = jQuery('#specification .filter-frequency .filter-option.active').text();
+
+                // jQuery(this).parents('.node-product-specification').find('.product-specification-tab.amca').hide();
+                // jQuery(this).parents('.node-product-specification').find('.product-specification-tab.general').fadeIn();
+
+                // Shared
+                jQuery('.product-specification-tab.general.shared').fadeIn();
+
+                if(jQuery('.more-spec-btn').hasClass('active')) {
+                    jQuery('[data-voltage="'+current_voltage+'"][data-frequency="'+current_frequency+'"] .node-product-specification').show();
+                } else {
+                    jQuery('[data-voltage="'+current_voltage+'"][data-frequency="'+current_frequency+'"] .node-product-specification').hide();
+                }
+                
+                jQuery('[data-voltage="'+current_voltage+'"][data-frequency="'+current_frequency+'"] .product-specification-tab.general').fadeIn();
+
+                // In voltage and frequency
+                jQuery('[data-voltage="'+current_voltage+'"][data-frequency="'+current_frequency+'"] .product-specification-tab.amca').hide();
+                
+            } else {
+                // Comparison page
+                jQuery('.product-specification-tab.amca').hide();
+                jQuery('.product-specification-tab.general').fadeIn();
+            }
+            
+
+            jQuery(this).siblings('.btn-amca').removeClass('active');
+            jQuery(this).addClass('active');
+        });
+        jQuery('.amca-buttons-wrapper .btn-amca').click(function() {
+            let current_voltage = jQuery('#specification .filter-voltage .filter-option.active').text();
+            let current_frequency = jQuery('#specification .filter-frequency .filter-option.active').text();
+            
+            if(jQuery(this).parents('.product-comparison').length == 0) {
+                // jQuery(this).parents('.node-product-specification').find('.product-specification-tab.general').hide();
+                // jQuery(this).parents('.node-product-specification').find('.product-specification-tab.amca').fadeIn();
+
+                // Shared
+                jQuery('.product-specification-tab.general.shared').hide();
+                jQuery('[data-voltage="'+current_voltage+'"][data-frequency="'+current_frequency+'"] .product-specification-tab.general').hide();
+
+                // In voltage and frequency
+                jQuery('[data-voltage="'+current_voltage+'"][data-frequency="'+current_frequency+'"] .node-product-specification').show();
+                jQuery('[data-voltage="'+current_voltage+'"][data-frequency="'+current_frequency+'"] .product-specification-tab.amca').show();
+            } else {
+                jQuery('.product-specification-tab.general').hide();
+                jQuery('.product-specification-tab.amca').fadeIn();
+            }
+            
+
+            jQuery(this).siblings('.btn-general').removeClass('active');
+            jQuery(this).addClass('active');
+        });
+
+        // Product detail page, show amca / general only in specific market
+        if(jQuery('body').hasClass('node-type-product'))  {
+            if(market) {
+                let $voltage = jQuery('.filter-voltage');
+                let $frequency = jQuery('.filter-frequency');
+
+                let first_voltage = null;
+                let first_frequency = null;
+            
+                if(amca_only_market) {  
+                    let show_general = true;
+                    
+                    jQuery('#specification .more-spec .spec-table').each(function() {
+                        let first_amca = true;
+                        if(jQuery(this).attr('data-has-amca') == 1) {
+
+                            amca_product = true;
+
+                            show_general = false;
+                            let _voltage = jQuery(this).attr('data-voltage');
+                            let _frequency = jQuery(this).attr('data-frequency');
+
+                            if(first_voltage == null) {
+                                first_voltage = _voltage;
+                            }
+
+                            if(first_frequency == null) {
+                                first_frequency = _frequency;
+                            }
+                
+                            $voltage.find('[data-value='+_voltage+']').addClass('valid');
+                            $frequency.find('[data-value='+_frequency+']').addClass('valid');
+                            
+                            jQuery(this).find('.node-product-specification').addClass('amca-only');
+                            jQuery(this).find('.product-specification-tab.general').remove();
+                            jQuery(this).find('.product-specification-tab.amca').show();
+
+                            if(first_amca) {
+                                jQuery('.product-specification-tab.general.shared').hide();
+
+                                $voltage.find('[data-value='+_voltage+']').click();
+                                $frequency.find('[data-value='+_frequency+']').click();
+                                first_amca = false;
+                            }           
+                
+                        } else {
+                            // jQuery(this).remove();
+                            // jQuery(this).find('.product-specification-tab.general').show();
+                            // jQuery(this).find('.product-specification-tab.amca').hide();
+                        }
+                        
+                    });
+
+                    if(!show_general) {
+                        $voltage.find('.filter-option:not(.valid)').remove();
+                        $frequency.find('.filter-option:not(.valid)').remove();
+                        $voltage.find('.filter-option:eq(0)').click();
+                    }
+                }
+                jQuery('.amca-buttons-wrapper').remove();
+            }
+        }
+        
+        if(jQuery('body').hasClass('page-product-comparison'))  {
+            if(market) {
+                jQuery('.amca-buttons-wrapper').remove();
+            }
+        }
+    }
+});
